@@ -1,0 +1,47 @@
+syntax = "proto2";
+import "nanopb.proto";
+
+enum EncryptionScheme {
+	no_encryption = 0;
+	aes128_hmac_sha256_trunc4 = 1;
+	chacha20_poly1305_trunc4 = 2;
+
+}
+
+// Those messages are coming from the interface MAC layer. Message framing is a responsibility
+// of the MAC layer. The MAC layer can do an additional encryption and forward error correction.
+// In the simplest case, the radio interface packet engine can be used to build and parse layer 2
+// messages (using sync bytes and length prefix) and the data can be sent using a CSMA/CA scheme.
+message Layer2Message {
+
+	// really required? @todo
+	required int32 message_type = 1;
+
+	// If no encryption scheme is defined, we are assuming clear-text data
+	optional EncryptionScheme encryption_scheme = 2 [default = no_encryption];
+
+	// It is required by the uMesh specification that an implementation must be able to handle
+	// layer 3 messages at least 64 bytes long.
+	required bytes data = 3 [(nanopb).max_size = 64];
+
+	// Nonce is used for symmetric encryption using a CTR scheme, it is continuously incremented.
+	// If the nonce is not present, no encprytion can be used.
+	optional bytes nonce = 4 [(nanopb).max_size = 4];
+
+	// Usually, the MAC tag is considerably smaller (4 or 8 bytes), but we are required to
+	// support tags of at least 16 bytes.
+	optional bytes mac = 5 [(nanopb).max_size = 16];
+
+}
+
+// Layer 3 messages are encoded as a byte array inside a layer 2 messages.
+message Layer3Message {
+	oneof content {
+		NodeAdvertisement node_advertisement = 1;
+	}
+}
+
+message NodeAdvertisement {
+
+
+}

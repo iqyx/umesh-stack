@@ -1,0 +1,65 @@
+import os
+
+env = Environment()
+Export("env")
+
+objs = []
+objs.append(SConscript("../SConscript"))
+objs.append(env.Object(source = ["main.c"]))
+objs.append(env.Object(source = [File(Glob("*.pb.c"))]))
+
+protos = []
+protos.append([File(Glob("../include/*.proto"))])
+
+#~ objs.append(env.Object(source = [
+	#~ File(Glob("lib/fec/*.c")),
+	#~ File(Glob("lib/log/*.c")),
+	#~ File(Glob("lib/filesystem/*.c")),
+#~ ]))
+env.Append(CPPPATH = [
+	Dir("."),
+	#~ Dir("lib/log"),
+	#~ Dir("lib/filesystem"),
+])
+
+env.Append(CFLAGS = [
+	"-Os",
+	"-g",
+	#~ "-flto",
+	"-fno-common",
+	"-ffunction-sections",
+	"-fdata-sections",
+	"--std=gnu99",
+	"-Wall",
+	"-Wextra",
+	"-pedantic",
+	#~ "-Werror",
+	"-Winit-self",
+	"-Wreturn-local-addr",
+	"-Wswitch-default",
+	"-Wuninitialized",
+	"-Wundef",
+	#~ "-Wstack-usage=256",
+	"-Wshadow",
+	"-Wimplicit-function-declaration",
+	"-Wcast-qual",
+	#~ "-Wwrite-strings",
+	"-Wconversion",
+	"-Wlogical-op",
+	"-Wmissing-declarations",
+	"-Wno-missing-field-initializers",
+	"-Wstack-protector",
+	"-Wredundant-decls",
+	"-Wmissing-prototypes",
+	"-Wstrict-prototypes",
+])
+
+# link the whole thing
+elf = env.Program(source = objs, target = "test1")
+
+# todo
+protoc = env.Command(source = protos, target = "protoc", action = "protoc --plugin=../../nanopb/generator/protoc-gen-nanopb --proto_path=../include --nanopb_out=. --proto_path=../../nanopb/generator/proto ../include/*.proto")
+
+
+Default(elf)
+
